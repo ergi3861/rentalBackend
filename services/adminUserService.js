@@ -42,24 +42,18 @@ const AdminUsersService = {
 
   getById: async (id) => {
     try {
-      console.log('🔍 getById called with id:', id);
-
+      // ✅ Hequr completion_percent dhe profile_complete — nuk ekzistojnë në DB
       const userResult = await db.query(
         `SELECT id, first_name, last_name, email, phone, role,
                 city, country, address, age, gender,
                 id_number, license_number, license_expiry,
                 license_photo, profile_photo,
-                completion_percent, profile_complete,
                 created_at
          FROM users WHERE id = ?`,
         [id]
       );
-      console.log('✅ userResult type:', typeof userResult, Array.isArray(userResult));
-      console.log('✅ userResult[0]:', userResult[0]);
 
       const user = userResult[0][0];
-      console.log('✅ user:', user);
-
       if (!user) return null;
 
       const resResult = await db.query(
@@ -72,7 +66,6 @@ const AdminUsersService = {
          ORDER BY r.created_at DESC LIMIT 20`,
         [id]
       );
-      console.log('✅ reservations:', resResult[0]);
 
       const sellResult = await db.query(
         `SELECT id, brand, model, year, fuel, mileage,
@@ -82,7 +75,6 @@ const AdminUsersService = {
          ORDER BY created_at DESC LIMIT 10`,
         [id]
       );
-      console.log('✅ sellRequests:', sellResult[0]);
 
       return {
         user,
