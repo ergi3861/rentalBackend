@@ -109,7 +109,6 @@ const carController = {
   },
 
   // ── Merr makinën sipas ID ───────────────────────────────────
-  // FIX: kthen objektin direkt (jo { success, data }) — si pret CarDetail.jsx
   getCarById: async (req, res) => {
     try {
       const [rows] = await db.query(
@@ -130,7 +129,6 @@ const carController = {
 
       car.media = media;
 
-      // Kthen direkt objektin — CarDetail.jsx e merr si data direkt
       res.json(car);
 
     } catch (err) {
@@ -140,7 +138,6 @@ const carController = {
   },
 
   // ── Merr të gjitha makinat me filters + pagination ──────────
-  // FIX: kthen "data" (jo "rows") — si pret Cars.jsx
   getAllCars: async (req, res) => {
     try {
       const {
@@ -186,8 +183,8 @@ const carController = {
         db.query(`SELECT COUNT(*) as total FROM cars c ${where}`, params),
         db.query(
           `SELECT c.*,
-             (SELECT image_path FROM media
-              WHERE car_id = c.id ORDER BY ID ASC LIMIT 1) AS thumbnail
+             (SELECT JSON_ARRAYAGG(image_path) FROM media
+              WHERE car_id = c.id ORDER BY ID ASC) AS media
            FROM cars c
            ${where}
            ORDER BY ${orderBy}
@@ -200,7 +197,10 @@ const carController = {
         total: countRow[0]?.total || 0,
         page:  Number(page),
         limit: Number(limit),
-        data:  rows   // ← "data" si pret Cars.jsx
+        data:  rows.map(car => ({
+          ...car,
+          media: typeof car.media === 'string' ? JSON.parse(car.media) : (car.media || [])
+        }))
       });
 
     } catch (err) {
