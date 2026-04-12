@@ -1,15 +1,20 @@
 const multer = require("multer");
-const path   = require("path");
-const db     = require("../config/db");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const db = require("../config/db");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key:    process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "rental",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
-  filename: (req, file, cb) => {
-    const fileName = Date.now() + "-" + Math.random().toString(36).slice(2) + path.extname(file.originalname);
-    cb(null, fileName);
-  }
 });
 
 const upload = multer({
@@ -25,9 +30,8 @@ const upload = multer({
 
 const registerMany = async (files, carId) => {
   if (!files || files.length === 0) return [];
-
   const sql = "INSERT INTO media (image_path, car_id) VALUES ?";
-  const values = files.map(f => [f.filename, carId]);
+  const values = files.map(f => [f.path, carId]); // f.path = Cloudinary URL
   const [result] = await db.query(sql, [values]);
   return result;
 };
