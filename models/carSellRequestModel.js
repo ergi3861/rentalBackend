@@ -20,7 +20,7 @@ const CarSellRequestModel = {
     `;
 
     const values = [
-      user_id      || null,
+      user_id || 0,  // ✅ 0 për persona të paloguar (NOT NULL constraint)
       brand,
       model,
       year,
@@ -38,7 +38,7 @@ const CarSellRequestModel = {
     const [result] = await db.execute(sql, values);
     const insertId = result.insertId;
 
-    // ✅ Nëse ka foto, ruaji në tabelën e fotove (nëse ekziston)
+    // Nëse ka foto, ruaji në tabelën e fotove (nëse ekziston)
     if (photos.length > 0) {
       try {
         const photoSql = `
@@ -48,7 +48,6 @@ const CarSellRequestModel = {
         const photoValues = photos.flatMap((f) => [insertId, f]);
         await db.execute(photoSql, photoValues);
       } catch (_) {
-        // Nëse tabela nuk ekziston, vazhdo pa foto
         console.warn('⚠️ Tabela car_sell_request_photos nuk ekziston — foto u anashkaluan.');
       }
     }
@@ -70,6 +69,7 @@ const CarSellRequestModel = {
     );
     return rows[0] || null;
   },
+
 };
 
 module.exports = CarSellRequestModel;
