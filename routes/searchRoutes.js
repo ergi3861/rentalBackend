@@ -1,6 +1,7 @@
 const express = require("express");
 const router  = express.Router();
-const db      = require("../config/db"); // ndrysho me path-in e saktë të lidhjes tënde
+const db      = require("../config/db");
+const { logSearch } = require("../controllers/searchLogController");
 
 /**
  * GET /api/search
@@ -67,5 +68,8 @@ router.get("/", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+// ✅ POST /api/search/log → logo kërkimin nga navbar
+router.post("/log", logSearch);
 
 module.exports = router;

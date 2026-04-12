@@ -40,9 +40,12 @@ const AdminUsersService = {
     };
   },
 
-  // ✅ RREGULLUAR: shton të gjitha kolonat e profilit
   getById: async (id) => {
-    const [[userRows], [reservations], [sellRequests]] = await Promise.all([
+    const [
+      [userRows],
+      [reservations],
+      [sellRequests]
+    ] = await Promise.all([
       db.query(
         `SELECT id, first_name, last_name, email, phone, role,
                 city, country, address, age, gender,
@@ -75,12 +78,13 @@ const AdminUsersService = {
       ),
     ]);
 
-    if (!userRows[0]) return null;
+    const user = userRows[0];
+    if (!user) return null;
 
     return {
-      user:         userRows[0],
-      reservations: reservations[0] || [],
-      sellRequests: sellRequests[0] || [],
+      user,
+      reservations: reservations || [],
+      sellRequests: sellRequests || [],
     };
   },
 
@@ -99,7 +103,9 @@ const AdminUsersService = {
   },
 
   delete: async (id) => {
-    const [result] = await db.query("DELETE FROM users WHERE id = ?", [id]);
+    const [result] = await db.query(
+      "DELETE FROM users WHERE id = ?", [id]
+    );
     return result.affectedRows > 0;
   },
 
