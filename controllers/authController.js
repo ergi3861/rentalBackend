@@ -1,4 +1,4 @@
-const AuthService = require('../services/AuthService');
+const AuthService = require('../services/authService');
 
 exports.createUser = async (req, res) => {
   try {
