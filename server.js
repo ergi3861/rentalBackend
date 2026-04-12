@@ -20,6 +20,12 @@ app.use(cors({
   methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
 }));
+// ✅ Krijo folder nëse nuk ekziston
+const fs   = require('fs');
+const path = require('path');
+const sellDir = path.join(__dirname, 'uploads/sell-requests');
+if (!fs.existsSync(sellDir)) fs.mkdirSync(sellDir, { recursive: true });
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
