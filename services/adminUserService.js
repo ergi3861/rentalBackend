@@ -42,7 +42,7 @@ const AdminUsersService = {
 
   getById: async (id) => {
     try {
-      // ✅ Hequr completion_percent dhe profile_complete — nuk ekzistojnë në DB
+      // ✅ Pa completion_percent, profile_complete
       const userResult = await db.query(
         `SELECT id, first_name, last_name, email, phone, role,
                 city, country, address, age, gender,
@@ -56,9 +56,10 @@ const AdminUsersService = {
       const user = userResult[0][0];
       if (!user) return null;
 
+      // ✅ Pa pickup_location, dropoff_location
       const resResult = await db.query(
         `SELECT r.id, r.status, r.start_datetime, r.end_datetime,
-                r.total_price, r.pickup_location, r.dropoff_location,
+                r.total_price,
                 c.brand, c.model, c.year
          FROM reservations r
          JOIN cars c ON c.id = r.car_id
