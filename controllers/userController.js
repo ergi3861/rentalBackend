@@ -1,20 +1,22 @@
-const db     = require('../config/db');
-const multer = require('multer');
-const path   = require('path');
-const fs     = require('fs');
+const db        = require('../config/db');
+const multer    = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// ── Multer për foto ───────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = 'uploads/profiles';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+// ── Cloudinary config ─────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key:    process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+// ── Multer + Cloudinary storage ───────────────────────────────
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'rental/profiles',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
   },
-  filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname).toLowerCase();
-    const name = `user-${req.user.id}-${Date.now()}${ext}`;
-    cb(null, name);
-  }
 });
 
 const upload = multer({
@@ -40,7 +42,6 @@ const getProfile = async (req, res) => {
 
     if (!rows[0]) return res.status(404).json({ message: 'Useri nuk u gjet.' });
 
-    // Llogarit % të plotësimit
     const user = rows[0];
     const fields = ['phone','date_of_birth','address','city','id_number','license_number','license_photo'];
     const filled  = fields.filter(f => user[f]).length;
@@ -74,13 +75,6 @@ const updateProfile = async (req, res) => {
 
     if (fields.length === 0) return res.status(400).json({ message: 'Nuk ka të dhëna për të përditësuar.' });
 
-    // Kontrollo nëse profili është i plotë
-    const checkFields = ['phone','date_of_birth','address','city','id_number','license_number'];
-    const allFilled = checkFields.every(f =>
-      req.body[f] || (req.body[f] === undefined)
-    );
-
-    // Merr të dhënat ekzistuese për të kontrolluar plotësinë
     const [existing] = await db.query(
       'SELECT phone, date_of_birth, address, city, id_number, license_number, license_photo FROM users WHERE id = ?',
       [req.user.id]
@@ -92,12 +86,10 @@ const updateProfile = async (req, res) => {
 
     fields.push('profile_complete = ?');
     params.push(isComplete ? 1 : 0);
-
     params.push(req.user.id);
 
     await db.query(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params);
 
-    // Kthen profilin e ri
     const [updated] = await db.query(
       `SELECT id, first_name, last_name, email, phone,
               date_of_birth, age, gender, address, city, country,
@@ -121,14 +113,13 @@ const uploadLicense = [
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const filename = `profiles/${req.file.filename}`;
+      const fileUrl = req.file.path; // ← Cloudinary URL
 
       await db.query(
         'UPDATE users SET license_photo = ? WHERE id = ?',
-        [filename, req.user.id]
+        [fileUrl, req.user.id]
       );
 
-      // Ri-kontrollo plotësinë
       const [user] = await db.query(
         'SELECT phone, date_of_birth, address, city, id_number, license_number, license_photo FROM users WHERE id = ?',
         [req.user.id]
@@ -137,7 +128,7 @@ const uploadLicense = [
       const isComplete = profileFields.every(f => user[0][f]);
       await db.query('UPDATE users SET profile_complete = ? WHERE id = ?', [isComplete ? 1 : 0, req.user.id]);
 
-      res.json({ message: 'Patenta u ngarkua!', license_photo: filename });
+      res.json({ message: 'Patenta u ngarkua!', license_photo: fileUrl });
     } catch (err) {
       console.error('❌ uploadLicense:', err.message);
       res.status(500).json({ message: 'Gabim gjatë ngarkimit.' });
@@ -152,10 +143,10 @@ const uploadProfilePhoto = [
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const filename = `profiles/${req.file.filename}`;
-      await db.query('UPDATE users SET profile_photo = ? WHERE id = ?', [filename, req.user.id]);
+      const fileUrl = req.file.path; // ← Cloudinary URL
+      await db.query('UPDATE users SET profile_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
 
-      res.json({ message: 'Foto u ngarkua!', profile_photo: filename });
+      res.json({ message: 'Foto u ngarkua!', profile_photo: fileUrl });
     } catch (err) {
       console.error('❌ uploadProfilePhoto:', err.message);
       res.status(500).json({ message: 'Gabim gjatë ngarkimit.' });
