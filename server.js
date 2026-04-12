@@ -11,7 +11,11 @@ const adminRoutes           = require("./routes/adminRoutes");
 const app = express();
 
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"],
+  origin: [
+    'https://rental-96lwv7ud6-ergi3861s-projects.vercel.app',
+    'https://rental-seven-xi.vercel.app',
+    'http://localhost:3000'
+  ],
   credentials: true,
   methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
