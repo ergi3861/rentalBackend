@@ -20,7 +20,7 @@ const CarSellRequestModel = {
     `;
 
     const values = [
-      user_id || 0,  // ✅ 0 për persona të paloguar (NOT NULL constraint)
+      user_id || 0,
       brand,
       model,
       year,
@@ -33,12 +33,12 @@ const CarSellRequestModel = {
       name,
       phone,
       city,
+      // ✅ status nuk specifikohet — DB e vendos 'pending' automatikisht
     ];
 
     const [result] = await db.execute(sql, values);
     const insertId = result.insertId;
 
-    // Nëse ka foto, ruaji në tabelën e fotove (nëse ekziston)
     if (photos.length > 0) {
       try {
         const photoSql = `
