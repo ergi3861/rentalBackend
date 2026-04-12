@@ -41,12 +41,10 @@ const AdminUsersService = {
   },
 
   getById: async (id) => {
-    const [
-      [userRows],
-      [reservations],
-      [sellRequests]
-    ] = await Promise.all([
-      db.query(
+    try {
+      console.log('🔍 getById called with id:', id);
+
+      const userResult = await db.query(
         `SELECT id, first_name, last_name, email, phone, role,
                 city, country, address, age, gender,
                 id_number, license_number, license_expiry,
@@ -55,37 +53,47 @@ const AdminUsersService = {
                 created_at
          FROM users WHERE id = ?`,
         [id]
-      ),
-      db.query(
+      );
+      console.log('✅ userResult type:', typeof userResult, Array.isArray(userResult));
+      console.log('✅ userResult[0]:', userResult[0]);
+
+      const user = userResult[0][0];
+      console.log('✅ user:', user);
+
+      if (!user) return null;
+
+      const resResult = await db.query(
         `SELECT r.id, r.status, r.start_datetime, r.end_datetime,
                 r.total_price, r.pickup_location, r.dropoff_location,
                 c.brand, c.model, c.year
          FROM reservations r
          JOIN cars c ON c.id = r.car_id
          WHERE r.user_id = ?
-         ORDER BY r.created_at DESC
-         LIMIT 20`,
+         ORDER BY r.created_at DESC LIMIT 20`,
         [id]
-      ),
-      db.query(
+      );
+      console.log('✅ reservations:', resResult[0]);
+
+      const sellResult = await db.query(
         `SELECT id, brand, model, year, fuel, mileage,
                 asking_price, admin_offer_price, status, city, created_at
          FROM car_sell_requests
          WHERE user_id = ?
-         ORDER BY created_at DESC
-         LIMIT 10`,
+         ORDER BY created_at DESC LIMIT 10`,
         [id]
-      ),
-    ]);
+      );
+      console.log('✅ sellRequests:', sellResult[0]);
 
-    const user = userRows[0];
-    if (!user) return null;
+      return {
+        user,
+        reservations: resResult[0]  || [],
+        sellRequests: sellResult[0] || [],
+      };
 
-    return {
-      user,
-      reservations: reservations || [],
-      sellRequests: sellRequests || [],
-    };
+    } catch (err) {
+      console.error('❌ getById FULL ERROR:', err);
+      throw err;
+    }
   },
 
   updateRole: async (id, role, requestingAdminRole) => {
