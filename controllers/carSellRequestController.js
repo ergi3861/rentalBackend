@@ -15,24 +15,8 @@ const CarSellRequestController = {
       return res.status(400).json({ error: 'Plotëso të gjitha fushat e detyrueshme.' });
     }
 
-    // ── Validim moshe nga token ─────────────────────────────
-    if (req.user) {
-      try {
-        const [rows] = await db.execute(
-          'SELECT date_of_birth FROM users WHERE id = ?', [req.user.id]
-        );
-        if (rows[0]?.date_of_birth) {
-          const age = Math.floor((Date.now() - new Date(rows[0].date_of_birth)) / 31557600000);
-          if (age < 20) {
-            return res.status(403).json({ error: 'Duhet të jeni të paktën 20 vjeç.' });
-          }
-        }
-      } catch (_) {}
-    }
-
     try {
       const id = await CarSellRequestModel.createRequest({
-        user_id: req.user?.id || null,
         brand, model,
         year:         parseInt(year),
         fuel,
@@ -73,21 +57,28 @@ const CarSellRequestController = {
     }
   },
 
-  // FIX: user_id != 0 dhe trajton NULL
   async getMyRequests(req, res) {
     try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Kërkohet autentikim.' });
+      }
+
       const [rows] = await db.execute(
-        `SELECT * FROM car_sell_requests
-         WHERE user_id = ? AND user_id IS NOT NULL AND user_id != 0
+        `SELECT * FROM car_sell_requests 
+         WHERE user_id = ? 
          ORDER BY created_at DESC`,
-        [req.user.id]
+        [userId]
       );
+
       res.json(rows);
     } catch (err) {
       console.error('❌ getMyRequests:', err.message);
       res.status(500).json({ error: 'Gabim gjatë leximit.' });
     }
   },
+
 };
 
 module.exports = CarSellRequestController;
