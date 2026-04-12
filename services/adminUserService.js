@@ -1,4 +1,4 @@
-const db    = require('../config/db');
+const db     = require('../config/db');
 const bcrypt = require('bcrypt');
 
 const AdminUsersService = {
@@ -7,10 +7,10 @@ const AdminUsersService = {
     const conditions = [];
     const params     = [];
 
-    if (role)   { conditions.push("role = ?"); params.push(role); }
+    if (role) { conditions.push("role = ?"); params.push(role); }
     if (search) {
-      conditions.push("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)");
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      conditions.push("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?)");
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     const where  = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -19,7 +19,8 @@ const AdminUsersService = {
     const [countResult, dataResult] = await Promise.all([
       db.query(`SELECT COUNT(*) as total FROM users ${where}`, params),
       db.query(
-        `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at,
+        `SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.role,
+                u.city, u.created_at,
                 COUNT(r.id) as reservation_count
          FROM users u
          LEFT JOIN reservations r ON r.user_id = u.id
@@ -27,35 +28,60 @@ const AdminUsersService = {
          GROUP BY u.id
          ORDER BY u.created_at DESC
          LIMIT ? OFFSET ?`,
-        [...params, Number(limit), Number(offset)])
+        [...params, Number(limit), Number(offset)]
+      )
     ]);
 
-    const total = countResult[0][0]?.total || 0;
-    const rows  = dataResult[0];
-
-    return { total, page, limit, rows };
+    return {
+      total: countResult[0][0]?.total || 0,
+      page,
+      limit,
+      rows: dataResult[0],
+    };
   },
 
+  // ✅ RREGULLUAR: shton të gjitha kolonat e profilit
   getById: async (id) => {
-    const [[user], [reservations], [sellRequests]] = await Promise.all([
+    const [[userRows], [reservations], [sellRequests]] = await Promise.all([
       db.query(
-        "SELECT id, first_name, last_name, email, role, created_at FROM users WHERE id = ?",
+        `SELECT id, first_name, last_name, email, phone, role,
+                city, country, address, age, gender,
+                id_number, license_number, license_expiry,
+                license_photo, profile_photo,
+                completion_percent, profile_complete,
+                created_at
+         FROM users WHERE id = ?`,
         [id]
       ),
       db.query(
-        `SELECT r.*, c.brand, c.model FROM reservations r
+        `SELECT r.id, r.status, r.start_datetime, r.end_datetime,
+                r.total_price, r.pickup_location, r.dropoff_location,
+                c.brand, c.model, c.year
+         FROM reservations r
          JOIN cars c ON c.id = r.car_id
-         WHERE r.user_id = ? ORDER BY r.created_at DESC LIMIT 10`, [id]
+         WHERE r.user_id = ?
+         ORDER BY r.created_at DESC
+         LIMIT 20`,
+        [id]
       ),
-      // FIXED: car_sell_requests nuk ka kolonën 'name' — përdorim user_id
       db.query(
-        "SELECT * FROM car_sell_requests WHERE user_id = ? LIMIT 5",
+        `SELECT id, brand, model, year, fuel, mileage,
+                asking_price, admin_offer_price, status, city, created_at
+         FROM car_sell_requests
+         WHERE user_id = ?
+         ORDER BY created_at DESC
+         LIMIT 10`,
         [id]
       ),
     ]);
 
-    if (!user[0]) return null;
-    return { ...user[0], reservations, sellRequests };
+    if (!userRows[0]) return null;
+
+    return {
+      user:         userRows[0],
+      reservations: reservations[0] || [],
+      sellRequests: sellRequests[0] || [],
+    };
   },
 
   updateRole: async (id, role, requestingAdminRole) => {
