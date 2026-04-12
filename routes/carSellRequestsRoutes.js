@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp/;
     const ext     = allowed.test(path.extname(file.originalname).toLowerCase());
@@ -29,8 +29,8 @@ const upload = multer({
 });
 
 // ── Routes ────────────────────────────────────────────────────
-// ✅ upload.array('photos', 10) lexon FormData dhe foto
-router.post('/post', upload.array('photos', 10), controller.store);
+// ✅ requireAuth PARA upload — lexon token, pastaj FormData
+router.post('/post', requireAuth, upload.array('photos', 10), controller.store);
 router.get('/get',   controller.index);
 router.get('/my',    requireAuth, controller.getMyRequests);
 router.get('/:id',   controller.show);
