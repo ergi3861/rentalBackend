@@ -1,74 +1,75 @@
-const CarSellRequestModel = require('../models/carSellRequestModel');
 const db = require('../config/db');
 
-const CarSellRequestController = {
+const CarSellRequestModel = {
 
-  async store(req, res) {
-    console.log('📦 Body:', req.body);
+  async createRequest(data) {
     const {
       brand, model, year, fuel, transmission,
       color, mileage, condition, asking_price,
-      name, phone, city
-    } = req.body;
+      name, phone, city,
+      user_id = null,
+      photos  = [],
+    } = data;
 
-    if (!brand || !model || !year || !mileage || !transmission || !name || !phone || !city) {
-      return res.status(400).json({ error: 'Plotëso të gjitha fushat e detyrueshme.' });
+    const sql = `
+      INSERT INTO car_sell_requests
+        (user_id, brand, model, year, fuel, transmission,
+         color, mileage, \`condition\`, asking_price,
+         \`name\`, phone, city)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      user_id      || null,
+      brand,
+      model,
+      year,
+      fuel         || null,
+      transmission,
+      color        || null,
+      mileage,
+      condition    || null,
+      asking_price || null,
+      name,
+      phone,
+      city,
+    ];
+
+    const [result] = await db.execute(sql, values);
+    const insertId = result.insertId;
+
+    // ✅ Nëse ka foto, ruaji në tabelën e fotove (nëse ekziston)
+    if (photos.length > 0) {
+      try {
+        const photoSql = `
+          INSERT INTO car_sell_request_photos (request_id, filename)
+          VALUES ${photos.map(() => '(?, ?)').join(', ')}
+        `;
+        const photoValues = photos.flatMap((f) => [insertId, f]);
+        await db.execute(photoSql, photoValues);
+      } catch (_) {
+        // Nëse tabela nuk ekziston, vazhdo pa foto
+        console.warn('⚠️ Tabela car_sell_request_photos nuk ekziston — foto u anashkaluan.');
+      }
     }
 
-    try {
-      const id = await CarSellRequestModel.createRequest({
-        brand, model,
-        year:         parseInt(year),
-        fuel,
-        transmission,
-        color,
-        mileage:      parseInt(mileage),
-        condition,
-        asking_price: asking_price ? parseInt(asking_price) : null,
-        name, phone, city
-      });
-
-      console.log(`✅ Kërkesë e re #${id}: ${brand} ${model} (${year}) – ${name} / ${phone}`);
-      res.status(201).json({ message: 'Kërkesa u dërgua me sukses!', id });
-
-    } catch (err) {
-      console.error('❌ DB error:', err.message);
-      res.status(500).json({ error: 'Gabim i brendshëm. Provoni përsëri.' });
-    }
+    return insertId;
   },
 
-  async index(req, res) {
-    try {
-      const rows = await CarSellRequestModel.getAllRequests();
-      res.json(rows);
-    } catch (err) {
-      console.error('❌ DB error:', err.message);
-      res.status(500).json({ error: 'Gabim gjatë leximit.' });
-    }
+  async getAllRequests() {
+    const [rows] = await db.execute(
+      'SELECT * FROM car_sell_requests ORDER BY created_at DESC'
+    );
+    return rows;
   },
 
-  async show(req, res) {
-    try {
-      const row = await CarSellRequestModel.getByRequestId(req.params.id);
-      if (!row) return res.status(404).json({ error: 'Kërkesa nuk u gjet.' });
-      res.json(row);
-    } catch (err) {
-      res.status(500).json({ error: 'Gabim gjatë leximit.' });
-    }
-  },
-
-  async getMyRequests(req, res) {
-    try {
-      const [rows] = await db.execute(
-        'SELECT * FROM car_sell_requests WHERE user_id = ? ORDER BY created_at DESC',
-        [req.user.id]
-      );
-      res.json(rows);
-    } catch (err) {
-      console.error('❌ getMyRequests:', err.message);
-      res.status(500).json({ error: 'Gabim gjatë leximit.' });
-    }
+  async getByRequestId(id) {
+    const [rows] = await db.execute(
+      'SELECT * FROM car_sell_requests WHERE id = ?',
+      [id]
+    );
+    return rows[0] || null;
   },
 };
 
-module.exports = CarSellRequestController;
+module.exports = CarSellRequestModel;

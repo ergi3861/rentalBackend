@@ -19,7 +19,6 @@ const CarSellRequestController = {
       return res.status(400).json({ error: 'Plotëso të gjitha fushat e detyrueshme.' });
     }
 
-    // Merr paths e fotove nëse u ngarkuan
     const photoPaths = req.files?.map((f) => f.filename) || [];
 
     try {
@@ -36,15 +35,15 @@ const CarSellRequestController = {
         name,
         phone,
         city,
-        user_id:      req.user?.id || null,
-        photos:       photoPaths,
+        user_id: req.user?.id || null,
+        photos:  photoPaths,
       });
 
       console.log(`✅ Kërkesë e re #${id}: ${brand} ${model} (${year}) – ${name} / ${phone}`);
       res.status(201).json({ message: 'Kërkesa u dërgua me sukses!', id });
 
     } catch (err) {
-      // Nëse DB dështon, fshi fotot e ngarkuara
+      // Nëse DB dështon → fshi fotot
       photoPaths.forEach((filename) => {
         const filePath = path.join('uploads/sell-requests', filename);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
