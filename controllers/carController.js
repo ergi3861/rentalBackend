@@ -1,8 +1,10 @@
 const CarsModel = require('../models/carModel');
 const Media     = require('../uploads/media');
+const db        = require('../config/db');
 
 const carController = {
 
+  // ── Krijo makinë me disa imazhe ────────────────────────────
   createCar: async (req, res) => {
     try {
       const {
@@ -34,6 +36,7 @@ const carController = {
     }
   },
 
+  // ── Shto imazhe shtesë për një makinë ekzistuese ───────────
   addImages: async (req, res) => {
     try {
       const carId = req.params.id;
@@ -58,24 +61,7 @@ const carController = {
     }
   },
 
-  getAllCars: async (req, res) => {
-    try {
-      const { rows, total } = await CarsModel.getAllCars(req.query);
-
-      const carsWithMedia = await Promise.all(
-        rows.map(async (car) => {
-          car.media = await Media.getByCarId(car.id);
-          return car;
-        })
-      );
-
-      res.json({ success: true, total, data: carsWithMedia });
-    } catch (err) {
-      console.error("getAllCars error:", err);
-      res.status(500).json({ success: false, message: "Server error" });
-    }
-  },
-
+  // ── Filter options ─────────────────────────────────────────
   getFilterOptions: async (req, res) => {
     try {
       const options = await CarsModel.getFilterOptions();
@@ -86,49 +72,144 @@ const carController = {
     }
   },
 
+  // ── Makina me qira ─────────────────────────────────────────
   getRentalCars: async (req, res) => {
     try {
       const { rows } = await CarsModel.getAllCars({ type: "RENTAL" });
+
       const carsWithMedia = await Promise.all(
         rows.map(async (car) => {
           car.media = await Media.getByCarId(car.id);
           return car;
         })
       );
+
       res.json(carsWithMedia);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
 
+  // ── Makina për shitje ──────────────────────────────────────
   getSaleCars: async (req, res) => {
     try {
       const { rows } = await CarsModel.getAllCars({ type: "SALE" });
+
       const carsWithMedia = await Promise.all(
         rows.map(async (car) => {
           car.media = await Media.getByCarId(car.id);
           return car;
         })
       );
+
       res.json(carsWithMedia);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
 
+  // ── Merr makinën sipas ID ───────────────────────────────────
+  // FIX: kthen objektin direkt (jo { success, data }) — si pret CarDetail.jsx
   getCarById: async (req, res) => {
     try {
-      const car = await CarsModel.getById(req.params.id);
-      if (!car) return res.status(404).json({ success: false, message: "Makina nuk u gjet" });
+      const [rows] = await db.query(
+        'SELECT * FROM cars WHERE id = ?',
+        [req.params.id]
+      );
 
-      car.media = await Media.getByCarId(req.params.id);
-      res.json({ success: true, data: car });
+      if (!rows[0]) {
+        return res.status(404).json({ message: "Makina nuk u gjet" });
+      }
+
+      const car = rows[0];
+
+      const [media] = await db.query(
+        'SELECT * FROM media WHERE car_id = ? ORDER BY ID ASC',
+        [car.id]
+      );
+
+      car.media = media;
+
+      // Kthen direkt objektin — CarDetail.jsx e merr si data direkt
+      res.json(car);
+
     } catch (err) {
       console.error("getCarById error:", err);
-      res.status(500).json({ success: false, message: "Server error" });
+      res.status(500).json({ message: "Server error" });
     }
   },
 
+  // ── Merr të gjitha makinat me filters + pagination ──────────
+  // FIX: kthen "data" (jo "rows") — si pret Cars.jsx
+  getAllCars: async (req, res) => {
+    try {
+      const {
+        search, category, type, status, fuel, transmission,
+        sort = "default", page = 1, limit = 24
+      } = req.query;
+
+      const offset     = (Number(page) - 1) * Number(limit);
+      const conditions = [];
+      const params     = [];
+
+      if (search) {
+        conditions.push(`(
+          c.brand          LIKE ? OR
+          c.model          LIKE ? OR
+          c.category       LIKE ? OR
+          c.fuel           LIKE ? OR
+          c.color          LIKE ? OR
+          c.transmission   LIKE ? OR
+          c.status         LIKE ? OR
+          c.vin            LIKE ? OR
+          CAST(c.year AS CHAR) LIKE ?
+        )`);
+        const like = `%${search}%`;
+        params.push(like, like, like, like, like, like, like, like, like);
+      }
+
+      if (category) { conditions.push('LOWER(c.category) = LOWER(?)'); params.push(category); }
+      if (type)         { conditions.push('c.type = ?');         params.push(type);         }
+      if (status)       { conditions.push('c.status = ?');       params.push(status);       }
+      if (fuel)         { conditions.push('c.fuel = ?');         params.push(fuel);         }
+      if (transmission) { conditions.push('c.transmission = ?'); params.push(transmission); }
+
+      const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      // Sort
+      let orderBy = 'c.created_at DESC';
+      if (sort === 'price_asc')  orderBy = 'COALESCE(c.price_per_day, c.sale_price) ASC';
+      if (sort === 'price_desc') orderBy = 'COALESCE(c.price_per_day, c.sale_price) DESC';
+      if (sort === 'newest')     orderBy = 'c.created_at DESC';
+
+      const [[countRow], [rows]] = await Promise.all([
+        db.query(`SELECT COUNT(*) as total FROM cars c ${where}`, params),
+        db.query(
+          `SELECT c.*,
+             (SELECT image_path FROM media
+              WHERE car_id = c.id ORDER BY ID ASC LIMIT 1) AS thumbnail
+           FROM cars c
+           ${where}
+           ORDER BY ${orderBy}
+           LIMIT ? OFFSET ?`,
+          [...params, Number(limit), offset]
+        )
+      ]);
+
+      res.json({
+        total: countRow[0]?.total || 0,
+        page:  Number(page),
+        limit: Number(limit),
+        data:  rows   // ← "data" si pret Cars.jsx
+      });
+
+    } catch (err) {
+      console.error("getAllCars error:", err);
+      res.status(500).json({ message: "Gabim gjatë marrjes së makinave." });
+    }
+  },
+
+  // ── Fshi imazhet e makinës ─────────────────────────────────
   deleteImages: async (req, res) => {
     try {
       const carId = req.params.id;

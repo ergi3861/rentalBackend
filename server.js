@@ -6,12 +6,15 @@ const carSellRequestsRoutes = require("./routes/carSellRequestsRoutes");
 const contactRoutes         = require("./routes/contactRoutes");
 const reservationRoutes     = require("./routes/reservationRoutes");
 const userRoutes            = require("./routes/userRoutes");
+const adminRoutes           = require("./routes/adminRoutes");
 
 const app = express();
 
 app.use(cors({
   origin: ["http://localhost:3000", "http://localhost:3001"],
-  credentials: true
+  credentials: true,
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -24,6 +27,8 @@ app.use("/api/sell-requests", carSellRequestsRoutes);
 app.use("/api/contacts",      contactRoutes);
 app.use("/api/reservations",  reservationRoutes);
 app.use("/api/user",          userRoutes);
+app.use("/api/admin",         adminRoutes);
+app.use("/api/search",        require("./routes/searchRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

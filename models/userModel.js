@@ -28,14 +28,29 @@ const User = {
 
   getReservations: async (userId) => {
     const [rows] = await db.query(`
-      SELECT r.*, c.brand, c.model, c.year, c.category,
-             c.price_per_day, c.fuel, c.transmission
+      SELECT
+        r.*,
+        c.brand, c.model, c.year, c.category,
+        c.price_per_day, c.fuel, c.transmission,
+        MIN(m.image_path) AS thumbnail
       FROM reservations r
       JOIN cars c ON c.id = r.car_id
+      LEFT JOIN media m ON m.car_id = c.id
       WHERE r.user_id = ?
+      GROUP BY r.id
       ORDER BY r.created_at DESC
     `, [userId]);
     return rows;
+  },
+
+  // ── Merr moshën e userit ────────────────────────────────────
+  getAge: async (userId) => {
+    const [rows] = await db.query(
+      'SELECT date_of_birth FROM users WHERE id = ?', [userId]
+    );
+    const dob = rows[0]?.date_of_birth;
+    if (!dob) return null;
+    return Math.floor((Date.now() - new Date(dob)) / 31557600000);
   },
 };
 
