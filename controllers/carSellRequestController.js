@@ -9,6 +9,12 @@ const CarSellRequestController = {
     console.log('📦 Body:', req.body);
     console.log('📷 Files:', req.files?.length || 0);
 
+    // ✅ Nëse nuk është i loguar → 401
+    const user_id = req.user?.id;
+    if (!user_id) {
+      return res.status(401).json({ error: 'Duhet të jeni të kyçur për të dërguar një kërkesë.' });
+    }
+
     const {
       brand, model, year, fuel, transmission,
       color, mileage, condition, asking_price,
@@ -35,15 +41,14 @@ const CarSellRequestController = {
         name,
         phone,
         city,
-        user_id: req.user?.id || null,
-        photos:  photoPaths,
+        user_id,      // ✅ gjithmonë i loguar
+        photos:       photoPaths,
       });
 
       console.log(`✅ Kërkesë e re #${id}: ${brand} ${model} (${year}) – ${name} / ${phone}`);
       res.status(201).json({ message: 'Kërkesa u dërgua me sukses!', id });
 
     } catch (err) {
-      // Nëse DB dështon → fshi fotot
       photoPaths.forEach((filename) => {
         const filePath = path.join('uploads/sell-requests', filename);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);

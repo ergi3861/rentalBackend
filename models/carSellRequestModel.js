@@ -7,8 +7,8 @@ const CarSellRequestModel = {
       brand, model, year, fuel, transmission,
       color, mileage, condition, asking_price,
       name, phone, city,
-      user_id = null,
-      photos  = [],
+      user_id,
+      photos = [],
     } = data;
 
     const sql = `
@@ -20,7 +20,7 @@ const CarSellRequestModel = {
     `;
 
     const values = [
-      user_id || 0,
+      user_id,          // ✅ gjithmonë ID e userit të loguar
       brand,
       model,
       year,
@@ -33,7 +33,6 @@ const CarSellRequestModel = {
       name,
       phone,
       city,
-      // ✅ status nuk specifikohet — DB e vendos 'pending' automatikisht
     ];
 
     const [result] = await db.execute(sql, values);
