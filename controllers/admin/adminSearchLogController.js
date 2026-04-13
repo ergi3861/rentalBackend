@@ -1,6 +1,5 @@
 const db = require('../../config/db');
 
-// GET /api/admin/search-logs?page=1&limit=20
 const getSearchLogs = async (req, res) => {
   try {
     const { page = 1, limit = 20, q } = req.query;
@@ -24,6 +23,7 @@ const getSearchLogs = async (req, res) => {
       db.query(
         `SELECT
            s.id, s.query, s.results, s.created_at,
+           s.car_id, s.car_name, s.search_type,
            u.first_name, u.last_name, u.email
          FROM search_logs s
          LEFT JOIN users u ON u.id = s.user_id
@@ -46,7 +46,6 @@ const getSearchLogs = async (req, res) => {
   }
 };
 
-// GET /api/admin/search-logs/top — top 10 kërkimet më të shpeshta
 const getTopSearches = async (req, res) => {
   try {
     const [rows] = await db.query(

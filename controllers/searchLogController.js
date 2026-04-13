@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const logSearch = async (req, res) => {
   try {
-    const { query } = req.body;
+    const { query, car_id, car_name, search_type } = req.body;
 
     if (!query || query.trim().length < 2) {
       return res.status(400).json({ message: 'Query shumë e shkurtër.' });
@@ -21,9 +21,15 @@ const logSearch = async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO search_logs (user_id, query, results, created_at)
-       VALUES (?, ?, 0, NOW())`,
-      [userId, query.trim().toLowerCase()]
+      `INSERT INTO search_logs (user_id, query, results, car_id, car_name, search_type, created_at)
+       VALUES (?, ?, 0, ?, ?, ?, NOW())`,
+      [
+        userId,
+        query.trim().toLowerCase(),
+        car_id   || null,
+        car_name || null,
+        search_type || 'typing',
+      ]
     );
 
     res.status(201).json({ ok: true });
