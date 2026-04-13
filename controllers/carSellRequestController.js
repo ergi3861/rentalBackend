@@ -9,7 +9,6 @@ const CarSellRequestController = {
     console.log('📦 Body:', req.body);
     console.log('📷 Files:', req.files?.length || 0);
 
-    // ✅ Nëse nuk është i loguar → 401
     const user_id = req.user?.id;
     if (!user_id) {
       return res.status(401).json({ error: 'Duhet të jeni të kyçur për të dërguar një kërkesë.' });
@@ -29,8 +28,7 @@ const CarSellRequestController = {
 
     try {
       const id = await CarSellRequestModel.createRequest({
-        brand,
-        model,
+        brand, model,
         year:         parseInt(year),
         fuel,
         transmission,
@@ -38,11 +36,9 @@ const CarSellRequestController = {
         mileage:      parseInt(mileage),
         condition,
         asking_price: asking_price ? parseInt(asking_price) : null,
-        name,
-        phone,
-        city,
-        user_id,      // ✅ gjithmonë i loguar
-        photos:       photoPaths,
+        name, phone, city,
+        user_id,
+        photos: photoPaths,
       });
 
       console.log(`✅ Kërkesë e re #${id}: ${brand} ${model} (${year}) – ${name} / ${phone}`);
@@ -94,6 +90,44 @@ const CarSellRequestController = {
     } catch (err) {
       console.error('❌ getMyRequests:', err.message);
       res.status(500).json({ error: 'Gabim gjatë leximit.' });
+    }
+  },
+
+  // ✅ Useri pranon ose refuzon ofertën e adminit
+  async respondToOffer(req, res) {
+    try {
+      const userId = req.user?.id;
+      const { action } = req.body; // 'accepted' ose 'rejected'
+
+      if (!['accepted', 'rejected'].includes(action)) {
+        return res.status(400).json({ error: 'Aksion i pavlefshëm. Përdor accepted ose rejected.' });
+      }
+
+      // Kontrollo që kërkesa i përket këtij useri
+      const [rows] = await db.execute(
+        'SELECT * FROM car_sell_requests WHERE id = ? AND user_id = ?',
+        [req.params.id, userId]
+      );
+
+      if (!rows[0]) {
+        return res.status(404).json({ error: 'Kërkesa nuk u gjet.' });
+      }
+
+      // Vetëm kërkesat me status 'offered' mund të pranohen/refuzohen
+      if (rows[0].status !== 'offered') {
+        return res.status(400).json({ error: 'Vetëm kërkesat me ofertë mund të pranohen ose refuzohen.' });
+      }
+
+      await db.execute(
+        'UPDATE car_sell_requests SET status = ? WHERE id = ?',
+        [action, req.params.id]
+      );
+
+      res.json({ message: action === 'accepted' ? 'Oferta u pranua!' : 'Oferta u refuzua.' });
+
+    } catch (err) {
+      console.error('❌ respondToOffer:', err.message);
+      res.status(500).json({ error: 'Gabim gjatë përditësimit.' });
     }
   },
 
