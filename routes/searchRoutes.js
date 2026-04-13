@@ -1,14 +1,9 @@
-const express = require("express");
+const express = require('express');
 const router  = express.Router();
-const db      = require("../config/db");
-const { logSearch } = require("../controllers/searchLogController");
+const db      = require('../config/db');
+const { logSearch } = require('../controllers/searchLogController');
 
-/**
- * GET /api/search
- * Parametrat: q, vin, id, type, category, fuel, transmission,
- *             color, seats, status, year_min, year_max, price_min, price_max
- */
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const {
       q, type, category, fuel, transmission,
@@ -69,7 +64,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ POST /api/search/log → logo kërkimin nga navbar
-router.post("/log", logSearch);
+// ✅ POST /api/search/log — me optional auth për user_id
+router.post('/log', logSearch);
 
 module.exports = router;

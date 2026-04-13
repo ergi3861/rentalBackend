@@ -1,4 +1,5 @@
-const db = require('../config/db');
+const db  = require('../config/db');
+const jwt = require('jsonwebtoken');
 
 const logSearch = async (req, res) => {
   try {
@@ -8,7 +9,16 @@ const logSearch = async (req, res) => {
       return res.status(400).json({ message: 'Query shumë e shkurtër.' });
     }
 
-    const userId = req.user?.id || null;
+    // ✅ Merr user_id nga token nëse ekziston (optional auth)
+    let userId = null;
+    const header = req.headers.authorization || '';
+    const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id || null;
+      } catch (_) {}
+    }
 
     await db.query(
       `INSERT INTO search_logs (user_id, query, results, created_at)
