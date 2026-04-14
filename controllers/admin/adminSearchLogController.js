@@ -66,7 +66,7 @@ const getTopSearches = async (req, res) => {
       `SELECT query, COUNT(*) as count, AVG(results) as avg_results
        FROM search_logs
        GROUP BY query
-       ORDER BY count ASC
+       ORDER BY count DESC
        LIMIT 10`
     );
     res.json(rows);
