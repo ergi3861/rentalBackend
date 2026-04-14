@@ -9,10 +9,8 @@ const getSearchLogs = async (req, res) => {
     const params     = [];
 
     if (q) {
-      // ✅ Kërko me query, emër, mbiemër dhe email të userit
       conditions.push(`(
         s.query      LIKE ? OR
-        s.created_at LIKE ? OR
         u.first_name LIKE ? OR
         u.last_name  LIKE ? OR
         u.email      LIKE ? OR
@@ -21,7 +19,7 @@ const getSearchLogs = async (req, res) => {
         c.model      LIKE ? 
       )`);
       const like = `%${q}%`;
-      params.push(like, like, like, like, like, like, like, like);
+      params.push(like, like, like, like, like, like, like);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -68,7 +66,7 @@ const getTopSearches = async (req, res) => {
       `SELECT query, COUNT(*) as count, AVG(results) as avg_results
        FROM search_logs
        GROUP BY query
-       ORDER BY count DESC
+       ORDER BY count ASC
        LIMIT 10`
     );
     res.json(rows);
