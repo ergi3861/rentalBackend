@@ -15,12 +15,12 @@ const getSearchLogs = async (req, res) => {
         u.first_name LIKE ? OR
         u.last_name  LIKE ? OR
         u.email      LIKE ? OR
+        CONCAT(u.first_name, ' ', u.last_name) LIKE ? OR
         c.brand      LIKE ? OR
-        c.model      LIKE ? OR
-        CONCAT(u.first_name, ' ', u.last_name) LIKE ?
+        c.model      LIKE ? 
       )`);
       const like = `%${q}%`;
-      params.push(like, like, like, like, like);
+      params.push(like, like, like, like, like, like, like);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
