@@ -16,6 +16,7 @@ const getSearchLogs = async (req, res) => {
         u.last_name  LIKE ? OR
         u.email      LIKE ? OR
         c.brand      LIKE ? OR
+        c.model      LIKE ? OR
         CONCAT(u.first_name, ' ', u.last_name) LIKE ?
       )`);
       const like = `%${q}%`;
@@ -29,6 +30,7 @@ const getSearchLogs = async (req, res) => {
         `SELECT COUNT(*) as total
          FROM search_logs s
          LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN cars c ON c.id = s.car_id    
          ${where}`,
         params
       ),
@@ -39,6 +41,7 @@ const getSearchLogs = async (req, res) => {
            u.first_name, u.last_name, u.email
          FROM search_logs s
          LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN cars c on c.id = s.car_id    
          ${where}
          ORDER BY s.created_at DESC
          LIMIT ? OFFSET ?`,
