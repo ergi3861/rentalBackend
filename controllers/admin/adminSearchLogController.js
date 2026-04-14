@@ -9,15 +9,26 @@ const getSearchLogs = async (req, res) => {
     const params     = [];
 
     if (q) {
-      conditions.push('s.query LIKE ?');
-      params.push(`%${q}%`);
+      // ✅ Kërko me query, emër, mbiemër dhe email të userit
+      conditions.push(`(
+        s.query      LIKE ? OR
+        u.first_name LIKE ? OR
+        u.last_name  LIKE ? OR
+        u.email      LIKE ? OR
+        CONCAT(u.first_name, ' ', u.last_name) LIKE ?
+      )`);
+      const like = `%${q}%`;
+      params.push(like, like, like, like, like);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const [[countRow], [rows]] = await Promise.all([
       db.query(
-        `SELECT COUNT(*) as total FROM search_logs s ${where}`,
+        `SELECT COUNT(*) as total
+         FROM search_logs s
+         LEFT JOIN users u ON u.id = s.user_id
+         ${where}`,
         params
       ),
       db.query(
