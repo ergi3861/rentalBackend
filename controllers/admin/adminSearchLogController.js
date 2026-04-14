@@ -15,6 +15,7 @@ const getSearchLogs = async (req, res) => {
         u.first_name LIKE ? OR
         u.last_name  LIKE ? OR
         u.email      LIKE ? OR
+        c.brand      LIKE ? OR
         CONCAT(u.first_name, ' ', u.last_name) LIKE ?
       )`);
       const like = `%${q}%`;
