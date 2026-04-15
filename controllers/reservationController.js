@@ -23,7 +23,6 @@ const ReservationController = {
       return res.status(400).json({ error: 'Data e kthimit duhet të jetë pas datës së marrjes.' });
     }
 
-    // Merr user_id nga token nëse është i kyçur, NULL nëse jo
     const user_id = req.user?.id || null;
 
     try {
@@ -66,7 +65,6 @@ const ReservationController = {
     }
   },
 
-  // GET /api/reservations/my — rezervimet e userit të kyçur
   async myReservations(req, res) {
     try {
       const [rows] = await db.query(

@@ -48,7 +48,7 @@
           `INSERT INTO reservations
             (user_id, car_id, start_datetime, end_datetime,
               base_price, dynamic_price, delivery_fee, total_price, status)
-          VALUES (0, ?, ?, ?, ?, 10, ?, ?, 'pending')`,
+          VALUES (0, ?, ?, ?, ?, 10, ?, ?, 'pending_payment')`,
           [car_id, start_datetime, end_datetime, base_price, delivery_fee, total_price]
         );
 
