@@ -34,7 +34,6 @@ const AdminSellController = {
 
       const total = countRow[0]?.total || 0;
 
-      // Shto media për çdo kërkesë
       const rowsWithMedia = await Promise.all(
         rows.map(async (row) => {
           const [media] = await db.query(
@@ -107,7 +106,6 @@ const AdminSellController = {
 
   async delete(req, res) {
     try {
-      // Fshi media të lidhur
       await db.query("DELETE FROM media WHERE car_id = ?", [req.params.id]);
 
       const [result] = await db.query(

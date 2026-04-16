@@ -6,7 +6,7 @@ exports.getAll = async (req, res) => {
     const data = await AdminUsersService.getAll(req.query);
     res.json(data);
   } catch (err) {
-    console.error("❌ Adminuser error:", err.message); // ← shto këtë
+    console.error("❌ Adminuser error:", err.message); 
     res.status(500).json({ message: "Gabim" });
   }
 };

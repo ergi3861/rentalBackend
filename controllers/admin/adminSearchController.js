@@ -1,11 +1,9 @@
 const db = require('../../config/db');
 
-// GET /api/admin/search?q=term
-// Kërkon në: cars, users, reservations, car_sell_requests, contacts
 const adminSearch = async (req, res) => {
   const q = (req.query.q || '').trim();
 
-  if (!q || q.length < 2) {
+  if (!q || q.length < 1) {
     return res.json({ cars: [], users: [], reservations: [], sellRequests: [], contacts: [] });
   }
 
@@ -20,7 +18,6 @@ const adminSearch = async (req, res) => {
       [contacts],
     ] = await Promise.all([
 
-      // ── Makinat ───────────────────────────────────────────
       db.query(
         `SELECT id, brand, model, year, vin, status, type, price_per_day, sale_price
          FROM cars
@@ -29,7 +26,6 @@ const adminSearch = async (req, res) => {
         [like, like, like]
       ),
 
-      // ── Userat ────────────────────────────────────────────
       db.query(
         `SELECT id, first_name, last_name, email, role
          FROM users
@@ -38,7 +34,6 @@ const adminSearch = async (req, res) => {
         [like, like, like]
       ),
 
-      // ── Rezervimet ────────────────────────────────────────
       db.query(
         `SELECT r.id, r.status, r.start_datetime, r.end_datetime, r.total_price,
                 COALESCE(u.first_name, 'Guest') AS first_name,
@@ -54,7 +49,6 @@ const adminSearch = async (req, res) => {
         [like, like, like, like, like]
       ),
 
-      // ── Kërkesat shitje ───────────────────────────────────
       db.query(
         `SELECT id, name, phone, city, brand, model, year, status, asking_price
          FROM car_sell_requests
@@ -63,7 +57,6 @@ const adminSearch = async (req, res) => {
         [like, like, like, like]
       ),
 
-      // ── Kontaktet ─────────────────────────────────────────
       db.query(
         `SELECT id, emri, mbiemri, email, telefoni, created_at,
                 SUBSTRING(mesazhi, 1, 80) AS message_preview

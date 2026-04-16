@@ -13,7 +13,6 @@ const AuditLog = {
         [adminId, action, targetType || 'unknown', targetId || 0]
       );
     } catch (err) {
-      // Mos prishe flow-n kryesor nëse log dështon
       console.error("AuditLog error:", err.message);
     }
   },

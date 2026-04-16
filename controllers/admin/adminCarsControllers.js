@@ -4,7 +4,6 @@ const Media            = require('../../models/mediaModel');
 const multer           = require('multer');
 const path             = require('path');
 
-// ── Multer ────────────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename:    (req, file, cb) =>
@@ -20,7 +19,6 @@ exports.upload = multer({
   }
 }).array('images', 10);
 
-// ── getAll ────────────────────────────────────────────────────
 exports.getAll = async (req, res) => {
   try {
     const data = await AdminCarsService.getAll(req.query);
@@ -31,7 +29,6 @@ exports.getAll = async (req, res) => {
   }
 };
 
-// ── getById ───────────────────────────────────────────────────
 exports.getById = async (req, res) => {
   try {
     const car = await AdminCarsService.getById(req.params.id);
@@ -43,12 +40,10 @@ exports.getById = async (req, res) => {
   }
 };
 
-// ── create ────────────────────────────────────────────────────
 exports.create = async (req, res) => {
   try {
     const carId = await AdminCarsService.create(req.body, req.files);
 
-    // FIX: req.admin.id (nga requireAdmin middleware) — jo req.admin.id
     await AuditLog.log({
       adminId:    req.admin.id,
       action:     'car_created',
@@ -64,13 +59,11 @@ exports.create = async (req, res) => {
   }
 };
 
-// ── update ────────────────────────────────────────────────────
 exports.update = async (req, res) => {
   try {
     const ok = await AdminCarsService.update(req.params.id, req.body);
     if (!ok) return res.status(404).json({ message: "Makina nuk u gjet" });
 
-    // FIX: req.admin.id
     await AuditLog.log({
       adminId:    req.admin.id,
       action:     'car_updated',
@@ -86,13 +79,11 @@ exports.update = async (req, res) => {
   }
 };
 
-// ── delete ────────────────────────────────────────────────────
 exports.delete = async (req, res) => {
   try {
     const ok = await AdminCarsService.delete(req.params.id);
     if (!ok) return res.status(404).json({ message: "Makina nuk u gjet" });
 
-    // FIX: req.admin.id
     await AuditLog.log({
       adminId:    req.admin.id,
       action:     'car_deleted',
@@ -107,7 +98,6 @@ exports.delete = async (req, res) => {
   }
 };
 
-// ── addImages ─────────────────────────────────────────────────
 exports.addImages = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -121,7 +111,6 @@ exports.addImages = async (req, res) => {
   }
 };
 
-// ── deleteImage ───────────────────────────────────────────────
 exports.deleteImage = async (req, res) => {
   try {
     const ok = await AdminCarsService.deleteImage(req.params.mediaId, req.params.id);

@@ -3,14 +3,12 @@ const multer    = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// ── Cloudinary config ─────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key:    process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-// ── Multer + Cloudinary storage ───────────────────────────────
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -28,7 +26,6 @@ const upload = multer({
   }
 });
 
-// ── GET /api/user/profile ─────────────────────────────────────
 const getProfile = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -54,7 +51,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-// ── PUT /api/user/profile ─────────────────────────────────────
 const updateProfile = async (req, res) => {
   try {
     const allowed = [
@@ -106,14 +102,13 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// ── POST /api/user/profile/license ───────────────────────────
 const uploadLicense = [
   upload.single('license_photo'),
   async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const fileUrl = req.file.path; // ← Cloudinary URL
+      const fileUrl = req.file.path; 
 
       await db.query(
         'UPDATE users SET license_photo = ? WHERE id = ?',
@@ -136,14 +131,13 @@ const uploadLicense = [
   }
 ];
 
-// ── POST /api/user/profile/photo ──────────────────────────────
 const uploadProfilePhoto = [
   upload.single('profile_photo'),
   async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const fileUrl = req.file.path; // ← Cloudinary URL
+      const fileUrl = req.file.path; 
       await db.query('UPDATE users SET profile_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
 
       res.json({ message: 'Foto u ngarkua!', profile_photo: fileUrl });

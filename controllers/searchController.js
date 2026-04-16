@@ -12,7 +12,6 @@ const publicSearch = async (req, res) => {
   const like = `%${q}%`;
 
   try {
-    // Test i thjeshtë — vetëm brand LIKE, pa JOIN, pa subquery
     const [cars] = await db.query(
       `SELECT id, brand, model, year, type, status,
               fuel, transmission, category,
@@ -36,7 +35,6 @@ const publicSearch = async (req, res) => {
     console.log('✅ SEARCH RESULT:', cars.length, 'cars for query:', q);
     if (cars.length > 0) console.log('   First result:', cars[0].brand, cars[0].model);
 
-    // Shto thumbnail veçmas — pa subquery që mund të bllokojë
     const carsWithThumbs = await Promise.all(
       cars.map(async (car) => {
         try {
@@ -51,7 +49,6 @@ const publicSearch = async (req, res) => {
       })
     );
 
-    // Log i search (fire-and-forget)
     db.query(
       'INSERT INTO search_logs (user_id, query, results) VALUES (?, ?, ?)',
       [req.user?.id || null, q, cars.length]

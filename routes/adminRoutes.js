@@ -1,3 +1,4 @@
+// routes/adminRoutes.js
 const express      = require('express');
 const router       = express.Router();
 const { requireAdmin, requireSuperAdmin } = require('../middleware/adminMiddleware');
@@ -7,16 +8,15 @@ const carsCtrl     = require('../controllers/admin/adminCarsControllers');
 const resCtrl      = require('../controllers/admin/adminReservationController');
 const usersCtrl    = require('../controllers/admin/adminUsersControllers');
 const sellCtrl     = require('../controllers/admin/adminSellController');
+const auditCtrl    = require('../controllers/admin/adminAuditLogController');
 const { getSearchLogs, getTopSearches } = require('../controllers/admin/adminSearchLogController');
 const { adminSearch } = require('../controllers/admin/adminSearchController');
 
-// Të gjitha routes admin kërkojnë autentikim admin
 router.use(requireAdmin);
-router.get('/search', adminSearch);
 
+router.get('/search', adminSearch);
 router.get('/search-logs',     getSearchLogs);
 router.get('/search-logs/top', getTopSearches);
-
 
 // ── DASHBOARD ─────────────────────────────────────────────
 router.get('/dashboard/stats',    dashCtrl.getStats);
@@ -67,14 +67,22 @@ router.get('/contacts', async (req, res) => {
       )
     ]);
 
-    const total = countResult[0][0]?.total || 0;
-    const rows  = dataResult[0];
-
-    res.json({ total, rows });
+    res.json({
+      total: countResult[0][0]?.total || 0,
+      rows:  dataResult[0],
+    });
   } catch (err) {
-    console.error("❌ Contact error:", err.message);
-    res.status(500).json({ message: "Gabim" });
+    console.error('❌ Contact error:', err.message);
+    res.status(500).json({ message: 'Gabim' });
   }
 });
+
+// ── AUDIT LOGS ────────────────────────────────────────────
+// Renditja e rëndësishme: /entity/:entity/:entityId dhe /purge
+// duhet të vijnë PARA /:id, përndryshe Express i trajton si id.
+router.get('/audit-logs',                              auditCtrl.getAll);
+router.get('/audit-logs/entity/:entity/:entityId',     auditCtrl.getByEntity);
+router.delete('/audit-logs/purge', requireSuperAdmin,  auditCtrl.purge);
+router.get('/audit-logs/:id',                          auditCtrl.getById);
 
 module.exports = router;

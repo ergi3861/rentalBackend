@@ -6,7 +6,7 @@ exports.getAll = async (req, res) => {
     const data = await AdminReservationsService.getAll(req.query);
     res.json(data);
   } catch (err) {
-        console.error("❌ Reservation error:", err.message); // ← shto këtë
+        console.error("❌ Reservation error:", err.message);
 
     res.status(500).json({ message: "Gabim gjatë marrjes së rezervimeve" });
   }

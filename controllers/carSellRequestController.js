@@ -93,17 +93,15 @@ const CarSellRequestController = {
     }
   },
 
-  // ✅ Useri pranon ose refuzon ofertën e adminit
   async respondToOffer(req, res) {
     try {
       const userId = req.user?.id;
-      const { action } = req.body; // 'accepted' ose 'rejected'
+      const { action } = req.body; 
 
       if (!['accepted', 'rejected'].includes(action)) {
         return res.status(400).json({ error: 'Aksion i pavlefshëm. Përdor accepted ose rejected.' });
       }
 
-      // Kontrollo që kërkesa i përket këtij useri
       const [rows] = await db.execute(
         'SELECT * FROM car_sell_requests WHERE id = ? AND user_id = ?',
         [req.params.id, userId]
@@ -112,7 +110,6 @@ const CarSellRequestController = {
       if (!rows[0]) {
         return res.status(404).json({ error: 'Kërkesa nuk u gjet.' });
       }
-
       // Vetëm kërkesat me status 'offered' mund të pranohen/refuzohen
       if (rows[0].status !== 'offered') {
         return res.status(400).json({ error: 'Vetëm kërkesat me ofertë mund të pranohen ose refuzohen.' });

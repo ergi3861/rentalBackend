@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-// Verifiko token dhe kontrollo rolin admin/superadmin
 function requireAdmin(req, res, next) {
   const header = req.headers.authorization || "";
   const token  = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -23,7 +22,6 @@ function requireAdmin(req, res, next) {
   }
 }
 
-// Vetëm superadmin
 function requireSuperAdmin(req, res, next) {
   if (req.admin?.role !== "superadmin") {
     return res.status(403).json({ message: "Vetëm superadmin ka këtë leje" });

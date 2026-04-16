@@ -9,7 +9,6 @@ const logSearch = async (req, res) => {
       return res.status(400).json({ message: 'Query shumë e shkurtër.' });
     }
 
-    // ✅ Merr user_id nga token nëse ekziston (optional auth)
     let userId = null;
     const header = req.headers.authorization || '';
     const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
