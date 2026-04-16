@@ -8,7 +8,7 @@ const carsCtrl     = require('../controllers/admin/adminCarsControllers');
 const resCtrl      = require('../controllers/admin/adminReservationController');
 const usersCtrl    = require('../controllers/admin/adminUsersControllers');
 const sellCtrl     = require('../controllers/admin/adminSellController');
-const auditCtrl    = require('../controllers/admin/adminAuditLogController');
+const auditController    = require('../controllers/admin/adminAuditLog');
 const { getSearchLogs, getTopSearches } = require('../controllers/admin/adminSearchLogController');
 const { adminSearch } = require('../controllers/admin/adminSearchController');
 
@@ -80,9 +80,9 @@ router.get('/contacts', async (req, res) => {
 // ── AUDIT LOGS ────────────────────────────────────────────
 // Renditja e rëndësishme: /entity/:entity/:entityId dhe /purge
 // duhet të vijnë PARA /:id, përndryshe Express i trajton si id.
-router.get('/audit-logs',                              auditCtrl.getAll);
-router.get('/audit-logs/entity/:entity/:entityId',     auditCtrl.getByEntity);
-router.delete('/audit-logs/purge', requireSuperAdmin,  auditCtrl.purge);
-router.get('/audit-logs/:id',                          auditCtrl.getById);
+router.get('/audit-logs',                              auditController.getAll);
+router.get('/audit-logs/entity/:entity/:entityId',     auditController.getByEntity);
+router.delete('/audit-logs/purge', requireSuperAdmin,  auditController.purge);
+router.get('/audit-logs/:id',                          auditController.getById);
 
 module.exports = router;
