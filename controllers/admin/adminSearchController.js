@@ -1,4 +1,4 @@
-const SearchModel = require('../../models/Search');
+const SearchModel = require('../../models/searchModel');
 
 const adminSearch = async (req, res) => {
   const q = (req.query.q || '').trim();
