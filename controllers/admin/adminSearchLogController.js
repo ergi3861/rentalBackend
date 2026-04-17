@@ -1,4 +1,4 @@
-const SearchLogModel = require('../../models/SearchLog');
+const SearchLogModel = require('../../models/searchLogModel');
 
 const getSearchLogs = async (req, res) => {
   try {
