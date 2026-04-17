@@ -42,7 +42,6 @@ const AdminUsersService = {
 
   getById: async (id) => {
     try {
-      // ✅ Pa completion_percent, profile_complete
       const userResult = await db.query(
         `SELECT id, first_name, last_name, email, phone, role,
                 city, country, address, age, gender,
@@ -56,7 +55,6 @@ const AdminUsersService = {
       const user = userResult[0][0];
       if (!user) return null;
 
-      // ✅ Pa pickup_location, dropoff_location
       const resResult = await db.query(
         `SELECT r.id, r.status, r.start_datetime, r.end_datetime,
                 r.total_price,

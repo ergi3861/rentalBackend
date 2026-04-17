@@ -17,6 +17,18 @@ const ContactModel = {
       'SELECT * FROM contacts ORDER BY created_at DESC'
     );
     return rows;
+  },
+
+  async findAllPaginated({ limit, offset }) {
+    const [[countRow], [rows]] = await Promise.all([
+      db.execute('SELECT COUNT(*) as total FROM contacts'),
+      db.execute(
+        'SELECT * FROM contacts ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [limit, offset]
+      ),
+    ]);
+
+    return { total: countRow[0]?.total || 0, rows };
   }
 
 };

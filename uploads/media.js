@@ -31,7 +31,7 @@ const upload = multer({
 const registerMany = async (files, carId) => {
   if (!files || files.length === 0) return [];
   const sql = "INSERT INTO media (image_path, car_id) VALUES ?";
-  const values = files.map(f => [f.path, carId]); // f.path = Cloudinary URL
+  const values = files.map(f => [f.path, carId]); 
   const [result] = await db.query(sql, [values]);
   return result;
 };

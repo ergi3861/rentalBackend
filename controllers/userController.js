@@ -1,6 +1,8 @@
 const db        = require('../config/db');
 const multer    = require('multer');
 const cloudinary = require('cloudinary').v2;
+const bcrypt    = require('bcrypt');
+const User      = require('../models/userModel');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 cloudinary.config({
@@ -39,7 +41,7 @@ const getProfile = async (req, res) => {
 
     if (!rows[0]) return res.status(404).json({ message: 'Useri nuk u gjet.' });
 
-    const user = rows[0];
+    const user   = rows[0];
     const fields = ['phone','date_of_birth','address','city','id_number','license_number','license_photo'];
     const filled  = fields.filter(f => user[f]).length;
     const percent = Math.round((filled / fields.length) * 100);
@@ -69,16 +71,17 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    if (fields.length === 0) return res.status(400).json({ message: 'Nuk ka të dhëna për të përditësuar.' });
+    if (fields.length === 0)
+      return res.status(400).json({ message: 'Nuk ka të dhëna për të përditësuar.' });
 
     const [existing] = await db.query(
       'SELECT phone, date_of_birth, address, city, id_number, license_number, license_photo FROM users WHERE id = ?',
       [req.user.id]
     );
 
-    const merged = { ...existing[0], ...req.body };
+    const merged        = { ...existing[0], ...req.body };
     const profileFields = ['phone','date_of_birth','address','city','id_number','license_number'];
-    const isComplete = profileFields.every(f => merged[f]) && merged.license_photo;
+    const isComplete    = profileFields.every(f => merged[f]) && merged.license_photo;
 
     fields.push('profile_complete = ?');
     params.push(isComplete ? 1 : 0);
@@ -108,19 +111,15 @@ const uploadLicense = [
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const fileUrl = req.file.path; 
-
-      await db.query(
-        'UPDATE users SET license_photo = ? WHERE id = ?',
-        [fileUrl, req.user.id]
-      );
+      const fileUrl = req.file.path;
+      await db.query('UPDATE users SET license_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
 
       const [user] = await db.query(
         'SELECT phone, date_of_birth, address, city, id_number, license_number, license_photo FROM users WHERE id = ?',
         [req.user.id]
       );
       const profileFields = ['phone','date_of_birth','address','city','id_number','license_number','license_photo'];
-      const isComplete = profileFields.every(f => user[0][f]);
+      const isComplete    = profileFields.every(f => user[0][f]);
       await db.query('UPDATE users SET profile_complete = ? WHERE id = ?', [isComplete ? 1 : 0, req.user.id]);
 
       res.json({ message: 'Patenta u ngarkua!', license_photo: fileUrl });
@@ -137,7 +136,7 @@ const uploadProfilePhoto = [
     try {
       if (!req.file) return res.status(400).json({ message: 'Nuk u ngarkua asnjë imazh.' });
 
-      const fileUrl = req.file.path; 
+      const fileUrl = req.file.path;
       await db.query('UPDATE users SET profile_photo = ? WHERE id = ?', [fileUrl, req.user.id]);
 
       res.json({ message: 'Foto u ngarkua!', profile_photo: fileUrl });
@@ -148,4 +147,45 @@ const uploadProfilePhoto = [
   }
 ];
 
-module.exports = { getProfile, updateProfile, uploadLicense, uploadProfilePhoto };
+const getReservations = async (req, res) => {
+  try {
+    const rows = await User.getReservations(req.user.id);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Gabim gjatë leximit' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ message: 'Të gjitha fushat kërkohen' });
+  if (newPassword.length < 8)
+    return res.status(400).json({ message: 'Fjalëkalimi duhet të ketë min 8 karaktere' });
+
+  try {
+    const rows = await User.findById(req.user.id);
+    if (!rows[0]) return res.status(404).json({ message: 'Useri nuk u gjet' });
+
+    const valid = bcrypt.compareSync(currentPassword, rows[0].password);
+    if (!valid)
+      return res.status(401).json({ message: 'Fjalëkalimi aktual është i gabuar' });
+
+    const hashed = bcrypt.hashSync(newPassword, 12);
+    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+
+    res.json({ message: 'Fjalëkalimi u ndryshua me sukses' });
+  } catch (err) {
+    res.status(500).json({ message: 'Gabim gjatë ndryshimit' });
+  }
+};
+
+module.exports = {
+  getProfile,
+  updateProfile,
+  uploadLicense,
+  uploadProfilePhoto,
+  getReservations,
+  changePassword,
+};

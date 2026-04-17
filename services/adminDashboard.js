@@ -21,7 +21,6 @@ const DashboardService = {
           SUM(DATE(created_at) = CURDATE()) as today
           FROM users`),
 
-        // ✅ FIX 1: statuset reale nga DB tënde
         db.query(`SELECT
           COUNT(*) as total,
           SUM(status='pending_payment') as pending,
@@ -31,7 +30,6 @@ const DashboardService = {
           SUM(DATE(created_at) = CURDATE()) as today
           FROM reservations`),
 
-        // ✅ FIX 2: statuset reale të car_sell_requests
         db.query(`SELECT
           COUNT(*) as total,
           SUM(status='submitted') as new_requests,
@@ -41,7 +39,6 @@ const DashboardService = {
 
         db.query(`SELECT COUNT(*) as total FROM contacts`),
 
-        // ✅ FIX 3: statusi i saktë
         db.query(`SELECT
           COALESCE(SUM(total_price), 0) as total_revenue,
           COALESCE(SUM(CASE WHEN MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())
@@ -97,7 +94,7 @@ const DashboardService = {
         JOIN cars c ON c.id = r.car_id
         ORDER BY r.created_at DESC LIMIT 5
       `),
-      // ✅ FIX 4: car_sell_requests nuk ka kolonën 'name' — ka brand/model/status
+      
       db.query(`
         SELECT 'sell_request' as type, sr.id, sr.status, sr.created_at,
                sr.brand, sr.model,

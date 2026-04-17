@@ -1,20 +1,8 @@
-// models/AuditLog.js
 const db = require('../config/db');
 
 const AuditLog = {
 
-  /**
-   * Shkruan një veprim në audit log.
-   * @param {object} opts
-   * @param {number}  opts.adminId      - ID e adminit që kreu veprimin
-   * @param {string}  opts.action       - p.sh. 'UPDATE_USER', 'DELETE_PRODUCT'
-   * @param {string}  opts.entity       - emri i tabelës / entitetit
-   * @param {number}  opts.entityId     - ID e rreshtit që u pre
-   * @param {object}  [opts.oldValue]   - gjendja PARA ndryshimit (objekt i plotë ose fushat e ndryshuara)
-   * @param {object}  [opts.newValue]   - gjendja PAS ndryshimit
-   * @param {string}  [opts.ipAddress]  - IP e klientit
-   * @param {string}  [opts.userAgent]  - User-Agent header
-   */
+  
   log: async ({ adminId, action, entity, entityId, oldValue, newValue, ipAddress, userAgent }) => {
     try {
       await db.query(
@@ -33,14 +21,11 @@ const AuditLog = {
         ]
       );
     } catch (err) {
-      // Nuk duhet të thyejë request-in kryesor
+      
       console.error('[AuditLog] Insert error:', err.message);
     }
   },
 
-  /**
-   * Kthen listën e paginuar, me opsion filtrimi.
-   */
   getAll: async ({ page = 1, limit = 50, adminId, action, entity, entityId, from, to } = {}) => {
     const conditions = [];
     const params     = [];
@@ -86,9 +71,6 @@ const AuditLog = {
     };
   },
 
-  /**
-   * Kthen një log të vetëm me diff të detajuar.
-   */
   getById: async (id) => {
     const [rows] = await db.query(
       `SELECT al.*, u.first_name, u.last_name, u.email
@@ -104,9 +86,6 @@ const AuditLog = {
     return log;
   },
 
-  /**
-   * Kthen të gjitha logs për një entitet të caktuar (p.sh. historiku i një useri).
-   */
   getByEntity: async (entity, entityId) => {
     const [rows] = await db.query(
       `SELECT al.*, u.first_name, u.last_name, u.email
@@ -123,9 +102,6 @@ const AuditLog = {
     });
   },
 
-  /**
-   * Fshin logs më të vjetra se `days` ditë (për cron job).
-   */
   purge: async (days = 90) => {
     const [result] = await db.query(
       `DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)`,
@@ -134,9 +110,6 @@ const AuditLog = {
     return result.affectedRows;
   },
 
-  // ─── Helpers private ────────────────────────────────────────────
-
-  /** Parse JSON kolonat dhe normalizon rreshtin. */
   _parse: (row) => ({
     ...row,
     oldValue:  row.old_value ? JSON.parse(row.old_value) : null,
@@ -145,10 +118,6 @@ const AuditLog = {
     new_value: undefined,
   }),
 
-  /**
-   * Kthen vetëm fushat që ndryshuan.
-   * { fieldName: { from: oldVal, to: newVal } }
-   */
   _diff: (oldVal, newVal) => {
     if (!oldVal || !newVal) return null;
     const diff = {};

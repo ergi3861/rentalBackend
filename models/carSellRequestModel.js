@@ -20,7 +20,7 @@ const CarSellRequestModel = {
     `;
 
     const values = [
-      user_id,          // ✅ gjithmonë ID e userit të loguar
+      user_id,          
       brand,
       model,
       year,

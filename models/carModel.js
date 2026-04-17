@@ -8,7 +8,6 @@ const CarsModel = {
   return result;
 },
 
-  // Get all cars
   getAllCars :  async (filters) => {
     const {
       type, brand, category, fuel, transmission,
@@ -63,7 +62,6 @@ const CarsModel = {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    // Sorting
     if (sort === "price_desc") {
       query += " ORDER BY COALESCE(NULLIF(price_per_day,0), sale_price) DESC";
     } else if (sort === "price_asc") {
@@ -74,12 +72,10 @@ const CarsModel = {
       query += " ORDER BY created_at DESC";
     }
 
-    // Count total per pagination
     const countQuery = query.replace("SELECT *", "SELECT COUNT(*) as total");
     const [countRows] = await db.query(countQuery, params);
     const total = countRows[0].total;
 
-    // Pagination
     const offset = (Number(page) - 1) * Number(limit);
     query += " LIMIT ? OFFSET ?";
     params.push(Number(limit), offset);
@@ -122,13 +118,11 @@ const CarsModel = {
     };
   },
 
-  //Get car by ID
   getById: async (id) => {
     const [rows] = await db.query("SELECT * FROM cars WHERE id = ?", [id]);
     return rows[0] || null;
   }
 
 }
-
 
 module.exports = CarsModel;

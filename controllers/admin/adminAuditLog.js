@@ -1,9 +1,5 @@
 const AuditLog = require('../../models/auditLog');
 
-/**
- * GET /admin/audit-logs
- * Query params: page, limit, adminId, action, entity, entityId, from, to
- */
 const getAll = async (req, res) => {
   try {
     const {
@@ -35,10 +31,6 @@ const getAll = async (req, res) => {
   }
 };
 
-/**
- * GET /admin/audit-logs/:id
- * Kthen log-un e vetëm me diff të detajuar (from → to për çdo fushë).
- */
 const getById = async (req, res) => {
   try {
     const log = await AuditLog.getById(Number(req.params.id));
@@ -50,10 +42,6 @@ const getById = async (req, res) => {
   }
 };
 
-/**
- * GET /admin/audit-logs/entity/:entity/:entityId
- * Historiku i plotë i një entiteti të caktuar (p.sh. /entity/users/42).
- */
 const getByEntity = async (req, res) => {
   try {
     const { entity, entityId } = req.params;
@@ -65,11 +53,6 @@ const getByEntity = async (req, res) => {
   }
 };
 
-/**
- * DELETE /admin/audit-logs/purge
- * Fshin logs më të vjetra se ?days= ditë. Vetëm superAdmin.
- * Body ose query: { days: 90 }
- */
 const purge = async (req, res) => {
   try {
     const days    = Number(req.query.days ?? req.body?.days ?? 90);

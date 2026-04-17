@@ -1,6 +1,5 @@
 const db = require('../config/db');
 
-// ✅ Tabela media ka: ID (jo id), image_path, car_id
 
 const Media = {
 
@@ -18,7 +17,6 @@ const Media = {
   },
 
   deleteById: async (id) => {
-    // ✅ kolona quhet ID me shkronja të mëdha
     const [result] = await db.query("DELETE FROM media WHERE ID = ?", [id]);
     return result.affectedRows > 0;
   },

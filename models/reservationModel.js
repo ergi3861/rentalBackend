@@ -1,8 +1,7 @@
   const db = require('../config/db');
 
-  // Tarifa e dorëzimit nëse marrja/kthimi është jashtë zyrës kryesore
   const OFFICE_LOCATION = "Tirana Center";
-  const DELIVERY_FEE    = 15; // €
+  const DELIVERY_FEE    = 15; 
 
   const ReservationModel = {
 
@@ -16,13 +15,11 @@
         price_per_day,
       } = data;
 
-      // ── Llogarit ditët ──────────────────────────────────────
       const start   = new Date(start_datetime);
       const end     = new Date(end_datetime);
       const diffMs  = end - start;
       const days    = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 
-      // ── Llogarit çmimet ────────────────────────────────────
       const base_price    = parseFloat((price_per_day * days).toFixed(2));
       const delivery_fee  = (
         pickup_location  !== OFFICE_LOCATION ||
@@ -34,7 +31,6 @@
       try {
         await conn.beginTransaction();
 
-        // 1. Kontrollo nëse makina është available
         const [cars] = await conn.query(
           'SELECT status FROM cars WHERE id = ? FOR UPDATE',
           [car_id]
@@ -43,7 +39,6 @@
         if (!cars[0])                        throw new Error('Makina nuk u gjet.');
         if (cars[0].status !== 'available')  throw new Error('Makina nuk është e disponueshme.');
 
-        // 2. Fut rezervimin
         const [result] = await conn.query(
           `INSERT INTO reservations
             (user_id, car_id, start_datetime, end_datetime,
@@ -52,7 +47,6 @@
           [car_id, start_datetime, end_datetime, base_price, delivery_fee, total_price]
         );
 
-        // 3. Kalo makinën në "reserved"
         await conn.query(
           'UPDATE cars SET status = ? WHERE id = ?',
           ['reserved', car_id]

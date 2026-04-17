@@ -1,36 +1,20 @@
-const db  = require('../config/db');
-const jwt = require('jsonwebtoken');
+const jwt            = require('jsonwebtoken');
+const SearchLogModel = require('../models/SearchLog');
 
 const logSearch = async (req, res) => {
   try {
     const { query, car_id, car_name, search_type } = req.body;
 
-    if (!query || query.trim().length < 2) {
+    if (!query || query.trim().length < 2)
       return res.status(400).json({ message: 'Query shumë e shkurtër.' });
-    }
 
     let userId = null;
-    const header = req.headers.authorization || '';
-    const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+    const token = (req.headers.authorization || '').replace('Bearer ', '') || null;
     if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.id || null;
-      } catch (_) {}
+      try { userId = jwt.verify(token, process.env.JWT_SECRET)?.id || null; } catch (_) {}
     }
 
-    await db.query(
-      `INSERT INTO search_logs (user_id, query, results, car_id, car_name, search_type, created_at)
-       VALUES (?, ?, 0, ?, ?, ?, NOW())`,
-      [
-        userId,
-        query.trim().toLowerCase(),
-        car_id   || null,
-        car_name || null,
-        search_type || 'typing',
-      ]
-    );
-
+    await SearchLogModel.insertLog({ userId, query, car_id, car_name, search_type });
     res.status(201).json({ ok: true });
   } catch (err) {
     console.error('❌ logSearch:', err.message);

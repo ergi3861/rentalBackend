@@ -43,7 +43,6 @@ const User = {
     return rows;
   },
 
-  // ── Merr moshën e userit ────────────────────────────────────
   getAge: async (userId) => {
     const [rows] = await db.query(
       'SELECT date_of_birth FROM users WHERE id = ?', [userId]

@@ -110,7 +110,6 @@ const CarSellRequestController = {
       if (!rows[0]) {
         return res.status(404).json({ error: 'Kërkesa nuk u gjet.' });
       }
-      // Vetëm kërkesat me status 'offered' mund të pranohen/refuzohen
       if (rows[0].status !== 'offered') {
         return res.status(400).json({ error: 'Vetëm kërkesat me ofertë mund të pranohen ose refuzohen.' });
       }

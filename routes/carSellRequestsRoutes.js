@@ -4,6 +4,7 @@ const multer     = require('multer');
 const path       = require('path');
 const controller = require('../controllers/carSellRequestController');
 const { requireAuth } = require('../middleware/authMiddleware');
+const checkAge = require('../middleware/ageMiddleware');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/sell-requests/'),
@@ -25,10 +26,9 @@ const upload = multer({
   },
 });
 
-router.post('/post',             requireAuth, upload.array('photos', 10), controller.store);
+router.post('/post',             checkAge,requireAuth, upload.array('photos', 10), controller.store);
 router.get('/get',               controller.index);
 router.get('/my',                requireAuth, controller.getMyRequests);
-// ✅ PARA /:id — ose do kapej si id = "13/respond"
 router.patch('/:id/respond',     requireAuth, controller.respondToOffer);
 router.get('/:id',               controller.show);
 

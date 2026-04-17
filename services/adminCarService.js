@@ -30,8 +30,6 @@ const AdminCarsService = {
     const where  = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const offset = (Number(page) - 1) * Number(limit);
 
-    // FIX: mysql2/promise kthen [rows, fields] për çdo query
-    // COUNT query: countResult[0] = array i rreshtave, countResult[0][0] = rreshti i parë
     const [countResult, carsResult] = await Promise.all([
       db.query(`SELECT COUNT(*) as total FROM cars c ${where}`, params),
       db.query(
@@ -47,12 +45,9 @@ const AdminCarsService = {
       )
     ]);
 
-    // countResult[0] = rows array, countResult[0][0] = { total: N }
     const total = countResult[0][0]?.total || 0;
-    // carsResult[0] = rows array
     const carRows = carsResult[0];
 
-    // Shto media për çdo makinë
     const carsWithMedia = await Promise.all(
       carRows.map(async (car) => {
         car.media = await Media.getByCarId(car.id);
