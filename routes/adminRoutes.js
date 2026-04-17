@@ -46,7 +46,7 @@ router.get('/sell-requests/:id',             sellCtrl.getById);
 router.patch('/sell-requests/:id/status',    sellCtrl.updateStatus);
 router.delete('/sell-requests/:id',          sellCtrl.delete);
 
-router.get('/contacts',                contactsCtrl.findAllPaginated);
+router.get('/contacts',                contactsCtrl.getContacts);
 
 
 router.get('/audit-logs',                              auditCtrl.getAll);
