@@ -1,5 +1,5 @@
 const jwt            = require('jsonwebtoken');
-const SearchLogModel = require('../models/SearchLog');
+const SearchLogModel = require('../models/searchLogModel');
 
 const logSearch = async (req, res) => {
   try {
